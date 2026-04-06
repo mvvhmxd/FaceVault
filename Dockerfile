@@ -13,7 +13,9 @@ RUN pip install --no-cache-dir --upgrade pip && \
 
 COPY . .
 
-RUN python -c "from insightface.app import FaceAnalysis; app = FaceAnalysis(name='buffalo_l', providers=['CPUExecutionProvider']); app.prepare(ctx_id=0, det_size=(640,640)); print('Model ready')"
+ENV FACE_MODEL=buffalo_sc
+
+RUN python -c "from insightface.app import FaceAnalysis; app = FaceAnalysis(name='buffalo_sc', providers=['CPUExecutionProvider']); app.prepare(ctx_id=0, det_size=(320,320)); print('Model ready')"
 
 ENV PORT=8000
 EXPOSE 8000

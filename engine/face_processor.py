@@ -12,29 +12,35 @@ def _get_app():
     global _face_app, _initialized
     if _initialized:
         return _face_app
+
+    import os
+    model = os.environ.get("FACE_MODEL", "buffalo_sc")
+
     try:
         from insightface.app import FaceAnalysis
 
-        _face_app = FaceAnalysis(
-            name="buffalo_l", providers=["CPUExecutionProvider"]
-        )
-        _face_app.prepare(ctx_id=0, det_size=(640, 640))
+        _face_app = FaceAnalysis(name=model, providers=["CPUExecutionProvider"])
+        det_size = (320, 320) if model == "buffalo_sc" else (640, 640)
+        _face_app.prepare(ctx_id=0, det_size=det_size)
         _initialized = True
-        logger.info("FaceProcessor initialized with buffalo_l")
+        logger.info(f"FaceProcessor initialized with {model}")
     except Exception as e:
-        logger.warning(f"buffalo_l unavailable ({e}), trying buffalo_sc")
-        try:
-            from insightface.app import FaceAnalysis
+        logger.error(f"InsightFace init failed with {model}: {e}")
+        if model != "buffalo_sc":
+            try:
+                from insightface.app import FaceAnalysis
 
-            _face_app = FaceAnalysis(
-                name="buffalo_sc", providers=["CPUExecutionProvider"]
-            )
-            _face_app.prepare(ctx_id=0, det_size=(320, 320))
+                _face_app = FaceAnalysis(
+                    name="buffalo_sc", providers=["CPUExecutionProvider"]
+                )
+                _face_app.prepare(ctx_id=0, det_size=(320, 320))
+                _initialized = True
+                logger.info("Fallback: FaceProcessor initialized with buffalo_sc")
+            except Exception as e2:
+                logger.error(f"InsightFace initialization failed: {e2}")
+                _initialized = True
+        else:
             _initialized = True
-            logger.info("FaceProcessor initialized with buffalo_sc")
-        except Exception as e2:
-            logger.error(f"InsightFace initialization failed: {e2}")
-            _initialized = True  # prevent retry loops
     return _face_app
 
 
