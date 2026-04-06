@@ -33,9 +33,7 @@ privacy_analyzer = PrivacyAnalyzer(recon_engine)
 
 @asynccontextmanager
 async def lifespan(application: FastAPI):
-    logger.info("Initializing face processing models …")
-    processor.initialize()
-    logger.info("FaceVault ready")
+    logger.info("FaceVault starting (models load on first request)…")
     yield
 
 
