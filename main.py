@@ -136,9 +136,6 @@ async def process_frame(image: str = Form(...)):
         emo = emotion_det.detect(img, bbox)
         live = liveness_det.check(img, bbox)
         celeb = celebrity.match(emb, top_k=1)
-        celeb_lite = None
-        if celeb:
-            celeb_lite = {"name": celeb[0]["name"], "similarity": celeb[0]["similarity"]}
 
         results.append({
             "bbox": bbox,
@@ -153,7 +150,7 @@ async def process_frame(image: str = Form(...)):
             "is_live": live["is_live"],
             "liveness_score": live["score"],
             "liveness_checks": live["checks"],
-            "celebrity_match": celeb_lite,
+            "celebrity_match": celeb[0] if celeb else None,
         })
 
     elapsed = round((time.perf_counter() - t0) * 1000, 1)

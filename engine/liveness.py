@@ -60,12 +60,12 @@ class LivenessDetector:
         self.frame_count = 0
 
     def _track_key(self, bbox):
-        """Quantize bbox center into large grid cells so face tracking persists at low FPS."""
+        """Quantize bbox center into grid cells so nearby positions share state."""
         if bbox is None:
             return "default"
         x1, y1, x2, y2 = (int(v) for v in bbox)
         cx, cy = (x1 + x2) // 2, (y1 + y2) // 2
-        return f"{cx // 200}_{cy // 200}"
+        return f"{cx // 80}_{cy // 80}"
 
     def _get_track(self, bbox) -> _FaceTrack:
         key = self._track_key(bbox)
@@ -117,11 +117,11 @@ class LivenessDetector:
 
         # ── Boost: confirmed blinks are proof of life ──
         if track.ever_blinked:
-            score = max(score, 0.75)
+            score = max(score, 0.62)
         if checks["blink"] > 0.85:
-            score = max(score, 0.85)
-        if checks["motion"] > 0.7 and checks["blink"] > 0.5:
-            score += 0.10
+            score = max(score, 0.70)
+        if checks["motion"] > 0.8 and checks["blink"] > 0.6:
+            score += 0.08
 
         # ── Veto: no blinks over time = photo/screen ──
         if fc > 15 and not track.ever_blinked:
