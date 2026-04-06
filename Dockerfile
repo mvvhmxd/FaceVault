@@ -14,6 +14,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
 COPY . .
 
 ENV FACE_MODEL=buffalo_sc
+ENV LITE_MODE=true
 
 RUN python -c "from insightface.app import FaceAnalysis; app = FaceAnalysis(name='buffalo_sc', providers=['CPUExecutionProvider']); app.prepare(ctx_id=0, det_size=(320,320)); print('Model ready')"
 
