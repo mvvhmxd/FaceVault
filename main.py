@@ -24,18 +24,13 @@ from engine.privacy import PrivacyAnalyzer
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("facevault")
 
-LITE_MODE = os.environ.get("LITE_MODE", "").lower() in ("1", "true", "yes")
-
 db = FaceDatabase()
 processor = FaceProcessor()
-emotion_det = None if LITE_MODE else EmotionDetector()
-liveness_det = None if LITE_MODE else LivenessDetector()
+emotion_det = EmotionDetector()
+liveness_det = LivenessDetector()
 celebrity = CelebrityMatcher()
 recon_engine = ReconstructionEngine(db)
 privacy_analyzer = PrivacyAnalyzer(recon_engine)
-
-if LITE_MODE:
-    logging.getLogger("facevault").info("Running in LITE mode (no emotion/liveness)")
 
 _models_ready = False
 _model_error = None
@@ -130,12 +125,6 @@ async def process_frame(image: str = Form(...)):
     t0 = time.perf_counter()
     img = _decode_b64(image)
 
-    # Downscale for memory on constrained environments
-    h, w = img.shape[:2]
-    if max(h, w) > 480:
-        scale = 480 / max(h, w)
-        img = cv2.resize(img, None, fx=scale, fy=scale)
-
     faces = processor.process_frame(img)
 
     results = []
@@ -144,17 +133,8 @@ async def process_frame(image: str = Form(...)):
         bbox = f["bbox"]
 
         identity = db.find_match(emb, threshold=0.4)
-
-        if emotion_det:
-            emo = emotion_det.detect(img, bbox)
-        else:
-            emo = {"emotion": "neutral", "confidence": 0.5, "scores": {}}
-
-        if liveness_det:
-            live = liveness_det.check(img, bbox)
-        else:
-            live = {"is_live": True, "score": 0.6, "checks": {}}
-
+        emo = emotion_det.detect(img, bbox)
+        live = liveness_det.check(img, bbox)
         celeb = celebrity.match(emb, top_k=1)
 
         results.append({

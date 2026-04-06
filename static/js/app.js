@@ -57,15 +57,11 @@ const app = {
 
     // ── Frame Capture ─────────────────────────────────
     getFrameB64() {
-        const vw = this.video.videoWidth;
-        const vh = this.video.videoHeight;
-        const maxDim = 480;
-        const scale = Math.min(maxDim / Math.max(vw, vh), 1);
         const c = document.createElement("canvas");
-        c.width = Math.round(vw * scale);
-        c.height = Math.round(vh * scale);
-        c.getContext("2d").drawImage(this.video, 0, 0, c.width, c.height);
-        return c.toDataURL("image/jpeg", 0.65);
+        c.width = this.video.videoWidth;
+        c.height = this.video.videoHeight;
+        c.getContext("2d").drawImage(this.video, 0, 0);
+        return c.toDataURL("image/jpeg", 0.7);
     },
 
     errorCount: 0,
