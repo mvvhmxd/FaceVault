@@ -2,6 +2,7 @@ import base64
 import time
 import logging
 import json
+import threading
 from contextlib import asynccontextmanager
 
 import cv2
@@ -30,10 +31,21 @@ celebrity = CelebrityMatcher()
 recon_engine = ReconstructionEngine(db)
 privacy_analyzer = PrivacyAnalyzer(recon_engine)
 
+_models_ready = False
+
+
+def _warmup():
+    global _models_ready
+    logger.info("Background model loading started...")
+    processor.initialize()
+    logger.info("Models loaded and ready")
+    _models_ready = True
+
 
 @asynccontextmanager
 async def lifespan(application: FastAPI):
-    logger.info("FaceVault starting (models load on first request)…")
+    thread = threading.Thread(target=_warmup, daemon=True)
+    thread.start()
     yield
 
 
@@ -96,6 +108,8 @@ def _sanitize_name(name: str) -> str:
 # ── Main real-time endpoint ─────────────────────────────────────────
 @app.post("/api/process-frame")
 async def process_frame(image: str = Form(...)):
+    if not _models_ready:
+        return {"faces": [], "count": 0, "processing_ms": 0, "loading": True}
     t0 = time.perf_counter()
     img = _decode_b64(image)
     faces = processor.process_frame(img)
@@ -329,7 +343,7 @@ async def delete_face(face_id: int):
 async def health():
     return {
         "status": "ok",
-        "model_loaded": processor.ready,
+        "models_ready": _models_ready,
         "db_faces": db.count,
     }
 

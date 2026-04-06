@@ -78,15 +78,21 @@ const app = {
             const resp = await fetch(API + "/api/process-frame", { method: "POST", body: fd });
             if (!resp.ok) {
                 this.errorCount++;
-                if (this.errorCount > 10) {
+                if (this.errorCount > 30) {
                     clearInterval(this.frameTimer);
-                    toast("Too many errors — pausing processing", "error");
+                    toast("Server not responding — check if backend is running", "error");
                 }
                 this.processing = false;
                 return;
             }
             this.errorCount = 0;
             const data = await resp.json();
+            if (data.loading) {
+                document.getElementById("faces-list").innerHTML =
+                    `<div class="empty-state"><p>Models loading... please wait</p></div>`;
+                this.processing = false;
+                return;
+            }
             this.drawResults(data);
             this.updateFaceCards(data.faces);
             this.updateStats(data);
