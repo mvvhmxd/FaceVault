@@ -1,0 +1,12 @@
+fastapi
+uvicorn[standard]
+python-multipart
+insightface
+onnxruntime
+opencv-python-headless
+mediapipe
+numpy
+scipy
+Pillow
+scikit-learn
+aiofiles

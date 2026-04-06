@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FaceVault — Real-Time Face Recognition</title>
+    <link rel="stylesheet" href="/static/css/style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+</head>
+<body>
+    <!-- Header -->
+    <header id="header">
+        <div class="header-left">
+            <div class="logo-icon">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2Z" opacity=".2"/>
+                    <circle cx="9" cy="10" r="1.2"/><circle cx="15" cy="10" r="1.2"/>
+                    <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+                </svg>
+            </div>
+            <h1>Face<span class="accent">Vault</span></h1>
+            <span class="badge">LIVE</span>
+        </div>
+        <div class="header-right">
+            <div class="stat" id="stat-fps"><span class="stat-label">FPS</span><span class="stat-value" id="fps-value">0</span></div>
+            <div class="stat" id="stat-faces"><span class="stat-label">Faces</span><span class="stat-value" id="face-count">0</span></div>
+            <div class="stat" id="stat-db"><span class="stat-label">Database</span><span class="stat-value" id="db-count">0</span></div>
+            <div class="stat" id="stat-latency"><span class="stat-label">Latency</span><span class="stat-value" id="latency-value">—</span></div>
+        </div>
+    </header>
+
+    <!-- Main Layout -->
+    <main id="main">
+        <!-- Camera Panel -->
+        <section class="camera-panel">
+            <div class="camera-container">
+                <video id="video" autoplay playsinline muted></video>
+                <canvas id="overlay"></canvas>
+                <div class="camera-controls">
+                    <button id="btn-start" class="btn btn-primary" onclick="app.toggleCamera()">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+                        <span>Start Camera</span>
+                    </button>
+                    <button class="btn btn-accent" onclick="app.openRegister()">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+                        <span>Register Face</span>
+                    </button>
+                    <button class="btn btn-secondary" onclick="app.showReconstruction()">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                        <span>Reconstruct</span>
+                    </button>
+                    <button class="btn btn-secondary" onclick="app.checkPrivacy()">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                        <span>Privacy</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Info Panel -->
+        <aside class="info-panel">
+            <div class="panel-section" id="faces-panel">
+                <h2>Detected Faces</h2>
+                <div id="faces-list" class="faces-list">
+                    <div class="empty-state">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" opacity=".3"><circle cx="12" cy="12" r="10"/><circle cx="9" cy="10" r="1"/><circle cx="15" cy="10" r="1"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/></svg>
+                        <p>No faces detected yet.<br/>Start the camera to begin.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel-section" id="db-panel">
+                <h2>Registered Identities</h2>
+                <div id="db-list" class="db-list"></div>
+            </div>
+        </aside>
+    </main>
+
+    <!-- Register Modal -->
+    <div id="register-modal" class="modal" style="display:none">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Register New Face</h2>
+                <button class="modal-close" onclick="app.closeRegister()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <canvas id="register-preview" width="200" height="200"></canvas>
+                <div class="form-group">
+                    <label for="register-name">Name</label>
+                    <input type="text" id="register-name" placeholder="Enter person's name" autocomplete="off" />
+                </div>
+                <button class="btn btn-primary btn-full" onclick="app.registerFace()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>
+                    Save Identity
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reconstruction Modal -->
+    <div id="recon-modal" class="modal" style="display:none">
+        <div class="modal-content modal-wide">
+            <div class="modal-header">
+                <h2>Embedding Reconstruction</h2>
+                <button class="modal-close" onclick="app.closeRecon()">&times;</button>
+            </div>
+            <div class="modal-body recon-body">
+                <div class="recon-card">
+                    <h3>Original</h3>
+                    <canvas id="recon-original" width="192" height="192"></canvas>
+                </div>
+                <div class="recon-arrow">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                    <span class="recon-score" id="recon-sim">—</span>
+                </div>
+                <div class="recon-card">
+                    <h3>Reconstructed</h3>
+                    <img id="recon-result" width="192" height="192" />
+                </div>
+            </div>
+            <div class="recon-explain" id="recon-explain"></div>
+        </div>
+    </div>
+
+    <!-- Privacy Modal -->
+    <div id="privacy-modal" class="modal" style="display:none">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Privacy Risk Analysis</h2>
+                <button class="modal-close" onclick="app.closePrivacy()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="privacy-gauge" id="privacy-gauge">
+                    <div class="gauge-fill" id="gauge-fill"></div>
+                    <span class="gauge-label" id="gauge-label">—</span>
+                </div>
+                <div class="privacy-details" id="privacy-details"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast-container"></div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

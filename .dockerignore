@@ -1,0 +1,11 @@
+venv/
+__pycache__/
+*.pyc
+.git/
+.gitignore
+*.md
+data/faces.db
+build_celeb_db.py
+test_api.py
+assets/
+.cursor/
