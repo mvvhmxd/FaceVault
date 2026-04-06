@@ -32,14 +32,25 @@ recon_engine = ReconstructionEngine(db)
 privacy_analyzer = PrivacyAnalyzer(recon_engine)
 
 _models_ready = False
+_model_error = None
 
 
 def _warmup():
-    global _models_ready
-    logger.info("Background model loading started...")
-    processor.initialize()
-    logger.info("Models loaded and ready")
-    _models_ready = True
+    global _models_ready, _model_error
+    try:
+        logger.info("Background model loading started...")
+        processor.initialize()
+        if processor.ready:
+            logger.info("Models loaded and ready")
+            _models_ready = True
+        else:
+            _model_error = "Model initialized but not ready"
+            logger.error(_model_error)
+            _models_ready = True  # let requests through so errors are visible
+    except Exception as e:
+        _model_error = str(e)
+        logger.error(f"Model loading FAILED: {e}")
+        _models_ready = True  # unblock requests so health endpoint reports error
 
 
 @asynccontextmanager
@@ -341,9 +352,13 @@ async def delete_face(face_id: int):
 # ── Health / info ────────────────────────────────────────────────────
 @app.get("/api/health")
 async def health():
+    import os
     return {
-        "status": "ok",
+        "status": "ok" if processor.ready else "error",
         "models_ready": _models_ready,
+        "model_loaded": processor.ready,
+        "model_error": _model_error,
+        "face_model": os.environ.get("FACE_MODEL", "default"),
         "db_faces": db.count,
     }
 
