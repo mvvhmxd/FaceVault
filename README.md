@@ -1,4 +1,4 @@
-# FaceVault — Real-Time Face Recognition System
+# FaceVault  Real-Time Face Recognition System
 
 A polished, real-time face recognition web application with advanced embedding intelligence, explainability, and biometric security built to impress.
 
